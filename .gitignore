@@ -1,3 +1,4 @@
-# Ignore node_modules
-node_modules/
-
+node_modules
+.wwebjs_auth
+.wwebjs_cache
+.vercel
