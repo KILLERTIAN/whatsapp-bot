@@ -83,7 +83,8 @@ client.on('message', async (message) => {
         'https://rsvp.withgoogle.com/events/arcade-facilitator/syllabus'
     ];
 
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    // Updated URL regex to match various types of URLs, including those starting with "www." and shortened URLs
+    const urlRegex = /(?:https?:\/\/|www\.|bit\.ly|t\.co|tinyurl\.com|goo\.gl)[^\s]+/g;
     const foundUrls = message.body.match(urlRegex);
 
     if (foundUrls) {
@@ -129,7 +130,7 @@ client.on('message', async (message) => {
                     // Attempt to remove the participant from the group
                     await chat.removeParticipants([message.author || message.from]);
                     await chat.sendMessage(`${message.author || message.from} has been removed from the group for repeated violations.`);
-                    
+
                     const stickerMedia = MessageMedia.fromFilePath(stickerPath3);
                     await chat.sendMessage(stickerMedia, { sendMediaAsSticker: true });
                 } catch (error) {
@@ -146,17 +147,49 @@ client.on('message', async (message) => {
 
         return;
     }
+    // Remove or kick the user
+    const messageContent = message.body.toLowerCase();
 
-    // 'Tag all' functionality to mention all group members
-    if (message.body === '.tagall' && chat.isGroup) {
-        const mentions = chat.participants.map((participant) => participant.id._serialized);
-        await chat.sendMessage(`@everyone`, { mentions });
+    // Check if the sender is an admin
+    const isAdmin = chat.participants.find(participant => participant.id._serialized === message.author && participant.isAdmin);
+
+    if (isAdmin) {
+        // Handle tag and kick command
+        if (messageContent.includes('remove') || messageContent.includes('kick')) {
+            const mentionedUser = message.mentionedIds[0];
+            if (mentionedUser) {
+
+                try {
+                    await chat.removeParticipants([mentionedUser]);
+                    await chat.sendMessage(`@${mentionedUser} has been removed from the group.`);
+
+                } catch (error) {
+                    console.error('Failed to remove participant:', error);
+                    await chat.sendMessage('Failed to remove the user.');
+                }
+            } else {
+                await chat.sendMessage('No user mentioned.');
+            }
+        }
+    } else {
+        if (messageContent.includes('remove') || messageContent.includes('kick')) {
+            await chat.sendMessage('You are not authorized to perform this action.');
+
+        }
     }
 
-    // AI response feature
-    if (message.body.startsWith('.tao')) {
-        const query = message.body.slice(4).trim() || 'Hi';
-        generate(query, message);
+
+    // Handling .tao and .tagall commands if they appear anywhere in the message body
+    if (message.body.includes('.tao') || message.body.includes('.tagall')) {
+        if (chat.isGroup) {
+            if (message.body.includes('.tao')) {
+                const query = message.body.slice(message.body.indexOf('.tao') + 4).trim() || 'Hi';
+                generate(query, message);
+            } else if (message.body.includes('.tagall')) {
+                const mentions = chat.participants.map((participant) => participant.id._serialized);
+                await chat.sendMessage(`@everyone`, { mentions });
+            }
+        }
     }
 });
 
