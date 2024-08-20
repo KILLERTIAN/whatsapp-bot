@@ -1,9 +1,17 @@
-// Importing All Necessary Packages
 const express = require('express');
 const bodyParser = require('body-parser');
+const dotenv = require('dotenv');
 const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const fs = require('fs');
+
+// Load environment variables from .env file
+dotenv.config();
+const {
+    GoogleGenerativeAI } = require("@google/generative-ai");
+
+const systemInstruction = fs.readFileSync('./systemInstructions.txt', 'utf-8');
+// console.log(systemInstruction);
 
 // Create an instance of Express
 const app = express();
@@ -22,22 +30,143 @@ const stickerPath1 = './/assets/Hu Tao 7.webp';
 const stickerPath2 = './/assets/Hu Tao 1-1.webp';
 const stickerPath3 = './/assets/Hu Tao 2-1.webp';
 
-// Initialize Google Generative AI
-const genAI = new GoogleGenerativeAI('AIzaSyBaOMYBvlQ5OLL9lFTdF7ywUbWNrzQHzV8');
-const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+const apiKey = process.env.GEMINI_API_KEY;
+const genAI = new GoogleGenerativeAI(apiKey);
 
-// Allowed (immune) numbers
-const allowedNumbers = ['9717488830', '8169810219'];
-const warningCounts = {};
+const model = genAI.getGenerativeModel({
+    model: "gemini-1.5-flash",
+    systemInstruction: systemInstruction
+});
+
+const generationConfig = {
+    temperature: 0.4,
+    topP: 0.95,
+    topK: 64,
+    maxOutputTokens: 2000,
+};
+
+
 
 // Function to generate a response from the AI model and reply to the user
 async function generate(prompt, message) {
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
-
-    await message.reply(text); // Reply to the user
+    try {
+        const chatSession = model.startChat({
+            generationConfig,
+            history: [
+                {
+                    role: "user",
+                    parts: [
+                        { text: "hello what is your name?" },
+                    ],
+                },
+                {
+                    role: "model",
+                    parts: [
+                        { text: "👋 Hey there!  My name is Hu Tao, but you can call me Hu Tao! 👻  What's your name? 😄  I'm here to help you with the Google Arcade Facilitator Program.  What can I do for you today?" },
+                    ],
+                },
+                {
+                    role: "user",
+                    parts: [
+                        { text: "can you help me with a lab?" },
+                    ],
+                },
+                {
+                    role: "model",
+                    parts: [
+                        { text: "Of course! I'm happy to help you with a lab! 🤩  Tell me which lab you're working on and what kind of trouble you're having.  I'll do my best to guide you through it.  Don't worry, we'll get it done together! 💪  \n\nJust tell me the name of the lab or the badge you're trying to complete, and I'll see what I can do!  😊" },
+                    ],
+                },
+                {
+                    role: "user",
+                    parts: [
+                        { text: "I am not getting the progress for arcade base camp" },
+                    ],
+                },
+                {
+                    role: "model",
+                    parts: [
+                        { text: "Oh no!  That's a bummer! 😥  Let's see if we can get that Arcade Base Camp progress moving!  💪  \n\nFirst, can you tell me what you've already done in the lab?  Have you completed any of the tasks?  \n\nAlso, have you checked your Google Cloud Skills Boost profile to see if the progress is showing there?  \n\nDon't worry, we'll figure this out together!  👻  Let's get that progress bar moving!  🚀" },
+                    ],
+                },
+                {
+                    role: "user",
+                    parts: [
+                        { text: "can you help me with lab Manage Kubernetes in Google Cloud" },
+                    ],
+                },
+                {
+                    role: "model",
+                    parts: [
+                        { text: "Of course! I'm ready to help you conquer that Kubernetes lab! 🦸‍♀️  \n\nTell me, what part of the lab are you stuck on?  Is it setting up the cluster, deploying an app, or something else?  \n\nDon't worry, I've got your back!  Just give me some details, and we'll get you back on track!  💪  \n\nAnd remember, if you need a little extra motivation, you can always check out Durgacharan's YouTube channel for some helpful tips!  😉  \n\nLet's get this lab done! 🚀" },
+                    ],
+                },
+                {
+                    role: "user",
+                    parts: [
+                        { text: "Manage Kubernetes in Google Cloud: Challenge Lab in this lab i cant coplete task 3 pls help" },
+                    ],
+                },
+                {
+                    role: "model",
+                    parts: [
+                        { text: "Okay, let's tackle that Task 3 in the Kubernetes lab! 💪  \n\nTell me, what's the specific issue you're facing in Task 3?  Is it:\n\n* *Deploying the application?* \n* *Configuring the Ingress?* \n* *Accessing the application?* \n\nOnce you tell me the problem, I can guide you through the steps!  \n\nDon't worry, we'll get you through this!  👻  Just remember to take a deep breath and focus on the steps.  You've got this!  🚀" },
+                    ],
+                },
+                {
+                    role: "user",
+                    parts: [
+                        { text: "can you explain the point system?\n" },
+                    ],
+                },
+                {
+                    role: "model",
+                    parts: [
+                        {
+                            text: "Okay, let's break down the point system so you can become a point-earning pro! 🏆\n\nHere's the gist:\n\n* *Games:*  Each game you complete earns you *1 Arcade Point*.  \n* *Trivia:*  Each trivia badge you complete earns you *1 Arcade Point*.\n* *Skill Badges:*  For every *2 skill badges* you complete, you earn *1 Arcade Point*.\n\n*Bonus Points:*  You also get bonus points for completing milestones!  \n\n* *Milestone 1:*  2 Games + 2 Trivia + 8 Skill Badges = *10 Arcade Points* + *2 Bonus Points*\n* *Milestone 2:*  3 Games + 4 Trivia + 18 Skill Badges = *25 Arcade Points* + *9 Bonus Points*\n* *Milestone 3:*  5 Games + 6 Trivia + 28 Skill Badges = *40 Arcade Points* + *15 Bonus Points*\n* *Ultimate Milestone:*  6 Games + 8 Trivia + 42 Skill Badges = *60 Arcade Points* + *25 Bonus Points*\n\nSo, the more you learn and complete, the more points you earn!  And with more points, you can redeem some awesome Google Cloud goodies!  🎉\n\nDoes that make sense?  Let me know if you have any other questions about the point system!  😊"
+                        },
+                    ],
+                },
+                {
+                    role: "user",
+                    parts: [
+                        { text: "when can i calculate my arcade points?" },
+                    ],
+                },
+                {
+                    role: "model",
+                    parts: [
+                        {
+                            text: "You can calculate your Arcade Points anytime you want!  🥳  \n\nYou can use the handy points calculator here:  [https://techno-arcade.vercel.app](https://techno-arcade.vercel.app) \n\nJust enter the public profile and it will tell you your total Arcade Points!  \n\nBut remember, the bonus points for milestones are only awarded when you actually reach those milestones!  \n\nSo, keep on learning and completing those badges, and you'll be racking up those points in no time!  🚀"
+                        },
+                    ],
+                },
+                {
+                    role: "user",
+                    parts: [
+                      {text: "when will prize counter open?\n"},
+                    ],
+                  },
+                  {
+                    role: "model",
+                    parts: [
+                      {text: "You're eager to claim those prizes, huh?  I get it!  🤩  \n\nThe prize counter will open in **December 2024**.  \n\nSo, keep working hard and earning those Arcade Points!  You'll have a chance to redeem them for some awesome Google Cloud goodies soon!  🎉  \n\nIn the meantime, you can check out the Arcade website for more information about the prize counter and the types of goodies you can get.  \n\nGood luck with your learning journey!  🚀"},
+                    ],
+                  },
+            ],
+        });
+        const result = await chatSession.sendMessage(prompt);
+        const text = await result.response.text();
+        await message.reply(text);
+    } catch (error) {
+        console.error('Error generating response:', error);
+        console.error('Error details:', error.response ? error.response.data : error.message);
+        await message.reply('Sorry, I encountered an error while processing your request.');
+    }
 }
+
+
+
 
 // Event listeners for client status
 client.on('qr', (qr) => {
@@ -60,6 +189,9 @@ client.on('auth_failure', () => {
     console.log('Client authentication failed!');
 });
 
+// Allowed (immune) numbers
+const allowedNumbers = ['9717488830', '8169810219'];
+const warningCounts = {};
 // Handling incoming messages
 client.on('message', async (message) => {
     const chat = await message.getChat();
@@ -74,6 +206,12 @@ client.on('message', async (message) => {
 
     // Increment warning count for sender if necessary
     warningCounts[senderNumber] = warningCounts[senderNumber] || 0;
+    // Remove or kick the user
+    const messageContent = message.body.toLowerCase();
+
+    // Check if the sender is an admin
+    const isAdmin = chat.participants.find(participant => participant.id._serialized === message.author && participant.isAdmin);
+
 
     // Whitelist certain links while deleting others
     const whitelistedLinks = [
@@ -87,71 +225,13 @@ client.on('message', async (message) => {
     const urlRegex = /(?:https?:\/\/|www\.|bit\.ly|t\.co|tinyurl\.com|goo\.gl)[^\s]+/g;
     const foundUrls = message.body.match(urlRegex);
 
-    if (foundUrls) {
-        for (const url of foundUrls) {
-            const isWhitelisted = whitelistedLinks.some((link) => url === link);
-
-            if (!isWhitelisted) {
-                warningCounts[senderNumber]++;
-                await message.delete(true);
-                if (warningCounts[senderNumber] > 3) {
-                    if (chat.isGroup) {
-                        try {
-                            // Attempt to remove the participant from the group
-                            await chat.removeParticipants([message.author || message.from]);
-                            await chat.sendMessage(`${message.author || message.from} has been removed from the group for repeated violations.`);
-                            // Send sticker after removing
-                            const stickerMedia = MessageMedia.fromFilePath(stickerPath);
-                            await chat.sendMessage(stickerMedia, { sendMediaAsSticker: true });
-                        } catch (error) {
-                            console.error('Failed to remove participant:', error);
-                        }
-                    }
-                } else {
-                    await chat.sendMessage(`Unwanted links not allowed here !!! Warning Count: ${warningCounts[senderNumber]}`);
-                    // Send sticker as a warning
-                    const stickerMedia = MessageMedia.fromFilePath(stickerPath1);
-                    await chat.sendMessage(stickerMedia, { sendMediaAsSticker: true });
-                }
-                return;
-            }
-        }
-    }
 
     // Deleting messages containing specific words with a warning
     const bannedWords = ['Quicklab', 'Quick lab', 'quicklab', 'btecky', 'Btecky', 'QuickGCP', 'quickgcp', 'quick gcp', 'quick lab'];
-    if (bannedWords.some((word) => message.body.includes(word))) {
-        warningCounts[senderNumber]++;
-        await message.delete(true);
 
-        if (warningCounts[senderNumber] > 3) {
-            if (chat.isGroup) {
-                try {
-                    // Attempt to remove the participant from the group
-                    await chat.removeParticipants([message.author || message.from]);
-                    await chat.sendMessage(`${message.author || message.from} has been removed from the group for repeated violations.`);
 
-                    const stickerMedia = MessageMedia.fromFilePath(stickerPath3);
-                    await chat.sendMessage(stickerMedia, { sendMediaAsSticker: true });
-                } catch (error) {
-                    console.error('Failed to remove participant:', error);
-                }
-            }
-        } else {
 
-            await chat.sendMessage(`⚠️ Warning !!! Do not use banned words. Warning Count: ${warningCounts[senderNumber]}`);
-            // Send sticker as a warning
-            const stickerMedia = MessageMedia.fromFilePath(stickerPath2);
-            await chat.sendMessage(stickerMedia, { sendMediaAsSticker: true });
-        }
 
-        return;
-    }
-    // Remove or kick the user
-    const messageContent = message.body.toLowerCase();
-
-    // Check if the sender is an admin
-    const isAdmin = chat.participants.find(participant => participant.id._serialized === message.author && participant.isAdmin);
 
     if (isAdmin) {
         // Handle tag and kick command
@@ -176,6 +256,67 @@ client.on('message', async (message) => {
             await chat.sendMessage('You are not authorized to perform this action.');
 
         }
+
+        if (foundUrls) {
+            for (const url of foundUrls) {
+                const isWhitelisted = whitelistedLinks.some((link) => url === link);
+
+                if (!isWhitelisted) {
+                    warningCounts[senderNumber]++;
+                    await message.delete(true);
+                    if (warningCounts[senderNumber] > 3) {
+                        if (chat.isGroup) {
+                            try {
+                                // Attempt to remove the participant from the group
+                                await chat.removeParticipants([message.author || message.from]);
+                                await chat.sendMessage(`${message.author || message.from} has been removed from the group for repeated violations.`);
+                                // Send sticker after removing
+                                const stickerMedia = MessageMedia.fromFilePath(stickerPath);
+                                await chat.sendMessage(stickerMedia, { sendMediaAsSticker: true });
+                            } catch (error) {
+                                console.error('Failed to remove participant:', error);
+                            }
+                        }
+                    } else {
+                        await chat.sendMessage(`Unwanted links not allowed here !!! Warning Count: ${warningCounts[senderNumber]}`);
+                        // Send sticker as a warning
+                        const stickerMedia = MessageMedia.fromFilePath(stickerPath1);
+                        await chat.sendMessage(stickerMedia, { sendMediaAsSticker: true });
+                    }
+                    return;
+                }
+            }
+        }
+
+
+        if (bannedWords.some((word) => message.body.includes(word))) {
+            warningCounts[senderNumber]++;
+            await message.delete(true);
+
+            if (warningCounts[senderNumber] > 3) {
+                if (chat.isGroup) {
+                    try {
+                        // Attempt to remove the participant from the group
+                        await chat.removeParticipants([message.author || message.from]);
+                        await chat.sendMessage(`${message.author || message.from} has been removed from the group for repeated violations.`);
+
+                        const stickerMedia = MessageMedia.fromFilePath(stickerPath3);
+                        await chat.sendMessage(stickerMedia, { sendMediaAsSticker: true });
+                    } catch (error) {
+                        console.error('Failed to remove participant:', error);
+                    }
+                }
+            } else {
+
+                await chat.sendMessage(`⚠️ Warning !!! Do not use banned words. Warning Count: ${warningCounts[senderNumber]}`);
+                // Send sticker as a warning
+                const stickerMedia = MessageMedia.fromFilePath(stickerPath2);
+                await chat.sendMessage(stickerMedia, { sendMediaAsSticker: true });
+            }
+
+            return;
+        }
+
     }
 
 
@@ -202,7 +343,7 @@ app.post('/api/send-message', async (req, res) => {
 
     try {
         // Send a message using the WhatsApp bot
-        await client.sendMessage(`${number}@c.us`, message);
+        await client.sendMessage(`${number}`, message);
         res.status(200).json({ status: 'Message sent successfully!' });
     } catch (error) {
         console.error('Error sending message:', error);
