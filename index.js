@@ -144,15 +144,15 @@ async function generate(prompt, message) {
                 {
                     role: "user",
                     parts: [
-                      {text: "when will prize counter open?\n"},
+                        { text: "when will prize counter open?\n" },
                     ],
-                  },
-                  {
+                },
+                {
                     role: "model",
                     parts: [
-                      {text: "You're eager to claim those prizes, huh?  I get it!  🤩  \n\nThe prize counter will open in **December 2024**.  \n\nSo, keep working hard and earning those Arcade Points!  You'll have a chance to redeem them for some awesome Google Cloud goodies soon!  🎉  \n\nIn the meantime, you can check out the Arcade website for more information about the prize counter and the types of goodies you can get.  \n\nGood luck with your learning journey!  🚀"},
+                        { text: "You're eager to claim those prizes, huh?  I get it!  🤩  \n\nThe prize counter will open in **December 2024**.  \n\nSo, keep working hard and earning those Arcade Points!  You'll have a chance to redeem them for some awesome Google Cloud goodies soon!  🎉  \n\nIn the meantime, you can check out the Arcade website for more information about the prize counter and the types of goodies you can get.  \n\nGood luck with your learning journey!  🚀" },
                     ],
-                  },
+                },
             ],
         });
         const result = await chatSession.sendMessage(prompt);
@@ -197,6 +197,12 @@ client.on('message', async (message) => {
     const chat = await message.getChat();
 
     // Get sender number without formatting
+    if (!message.author) {
+        console.error('message.author is undefined');
+        return;
+    }
+
+    // Extract the sender's phone number from the message.author
     const senderNumber = message.author.replace(/[^0-9]/g, '');
 
     // Skip processing for immune numbers
@@ -322,16 +328,30 @@ client.on('message', async (message) => {
 
     // Handling .tao and .tagall commands if they appear anywhere in the message body
     if (message.body.includes('.tao') || message.body.includes('.tagall')) {
+        const chat = await message.getChat();
+
         if (chat.isGroup) {
             if (message.body.includes('.tao')) {
                 const query = message.body.slice(message.body.indexOf('.tao') + 4).trim() || 'Hi';
                 generate(query, message);
             } else if (message.body.includes('.tagall')) {
-                const mentions = chat.participants.map((participant) => participant.id._serialized);
-                await chat.sendMessage(`@everyone`, { mentions });
+                const groupSize = chat.participants.length;
+                const batchSize = 500; 
+                const delay = 1000; 
+                for (let i = 0; i < groupSize; i += batchSize) {
+                    const batchMentions = chat.participants.slice(i, i + batchSize).map((participant) => participant.id._serialized);
+                    await chat.sendMessage('@everyone', { mentions: batchMentions });
+
+                    // Adding delay between batches
+                    if (i + batchSize < groupSize) {
+                        await new Promise((resolve) => setTimeout(resolve, delay));
+                    }
+                }
             }
         }
     }
+
+
 });
 
 // Start the WhatsApp client
