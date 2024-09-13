@@ -4,6 +4,7 @@ const dotenv = require('dotenv');
 const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const fs = require('fs');
+const axios = require('axios');
 
 // Load environment variables from .env file
 dotenv.config();
@@ -370,6 +371,25 @@ app.post('/api/send-message', async (req, res) => {
         res.status(500).json({ status: 'Failed to send message', error });
     }
 });
+
+const SERVICE_URL = 'https://whatsapp-bot-3ab8.onrender.com';
+const pingService = () => {
+    axios.get(SERVICE_URL)
+        .then(response => console.log('Service pinged successfully:', response.status))
+        .catch(response => console.log('Service pinged successfully'));
+};
+
+// Function to set a random interval between 5 and 10 minutes
+const setRandomInterval = (func, min, max) => {
+    const randomDelay = Math.floor(Math.random() * (max - min + 1) + min);
+    setTimeout(() => {
+        func();
+        setRandomInterval(func, min, max); // Recursively set the next random interval
+    }, randomDelay);
+};
+
+// Start pinging the service at random intervals between 1 and 5 minutes
+setRandomInterval(pingService, 5 * 60 * 1000, 10 * 60 * 1000);
 
 // Start the Express server
 app.listen(port, () => {
