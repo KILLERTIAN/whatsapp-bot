@@ -193,63 +193,47 @@ client.on('auth_failure', () => {
 // Allowed (immune) numbers
 const allowedNumbers = ['9717488830', '8169810219'];
 const warningCounts = {};
-// Handling incoming messages
+const validLanguages = ['english', 'spanish', 'french', 'german', 'italian', 'chinese', 'swedish', 'japanese', 'hindi', 'hinglish'];
+const whitelistedLinks = [
+    'https://www.cloudskillsboost.google/',
+    'https://techno-arcade.vercel.app/',
+    'https://www.youtube.com/@durgacharannayak3058/',
+    'https://rsvp.withgoogle.com/events/arcade-facilitator/syllabus'
+];
+
+const urlRegex = /(?:https?:\/\/|www\.|bit\.ly|t\.co|tinyurl\.com|goo\.gl)[^\s]+/g;
+
 client.on('message', async (message) => {
     const chat = await message.getChat();
 
-    // Get sender number without formatting
+    if (!chat || !chat.participants) {
+        console.error('Chat or participants data is unavailable.');
+        return;
+    }
+
     if (!message.author) {
         console.error('message.author is undefined');
         return;
     }
 
-    // Extract the sender's phone number from the message.author
     const senderNumber = message.author.replace(/[^0-9]/g, '');
-
-    // Skip processing for immune numbers
     if (allowedNumbers.includes(senderNumber)) {
         return;
     }
 
-    // Increment warning count for sender if necessary
     warningCounts[senderNumber] = warningCounts[senderNumber] || 0;
-    // Remove or kick the user
     const messageContent = message.body.toLowerCase();
 
     // Check if the sender is an admin
     const isAdmin = chat.participants.find(participant => participant.id._serialized === message.author && participant.isAdmin);
 
-
-    // Whitelist certain links while deleting others
-    const whitelistedLinks = [
-        'https://www.cloudskillsboost.google/',
-        'https://techno-arcade.vercel.app/',
-        'https://www.youtube.com/@durgacharannayak3058/',
-        'https://rsvp.withgoogle.com/events/arcade-facilitator/syllabus'
-    ];
-
-    // Updated URL regex to match various types of URLs, including those starting with "www." and shortened URLs
-    const urlRegex = /(?:https?:\/\/|www\.|bit\.ly|t\.co|tinyurl\.com|goo\.gl)[^\s]+/g;
-    const foundUrls = message.body.match(urlRegex);
-
-
-    // Deleting messages containing specific words with a warning
-    const bannedWords = ['Quicklab', 'Quick lab', 'quicklab', 'btecky', 'Btecky', 'QuickGCP', 'quickgcp', 'quick gcp', 'quick lab'];
-
-
-
-
-
     if (isAdmin) {
-        // Handle tag and kick command
         if (messageContent.includes('remove') || messageContent.includes('kick')) {
             const mentionedUser = message.mentionedIds[0];
             if (mentionedUser) {
-
                 try {
                     await chat.removeParticipants([mentionedUser]);
                     await chat.sendMessage(`@${mentionedUser} has been removed from the group.`);
-
                 } catch (error) {
                     console.error('Failed to remove participant:', error);
                     await chat.sendMessage('Failed to remove the user.');
@@ -261,32 +245,26 @@ client.on('message', async (message) => {
     } else {
         if (messageContent.includes('remove') || messageContent.includes('kick')) {
             await chat.sendMessage('You are not authorized to perform this action.');
-
         }
 
+        const foundUrls = message.body.match(urlRegex);
         if (foundUrls) {
             for (const url of foundUrls) {
-                const isWhitelisted = whitelistedLinks.some((link) => url === link);
-
+                const isWhitelisted = whitelistedLinks.includes(url);
                 if (!isWhitelisted) {
                     warningCounts[senderNumber]++;
                     await message.delete(true);
                     if (warningCounts[senderNumber] > 3) {
-                        if (chat.isGroup) {
-                            try {
-                                // Attempt to remove the participant from the group
-                                await chat.removeParticipants([message.author || message.from]);
-                                await chat.sendMessage(`${message.author || message.from} has been removed from the group for repeated violations.`);
-                                // Send sticker after removing
-                                const stickerMedia = MessageMedia.fromFilePath(stickerPath);
-                                await chat.sendMessage(stickerMedia, { sendMediaAsSticker: true });
-                            } catch (error) {
-                                console.error('Failed to remove participant:', error);
-                            }
+                        try {
+                            await chat.removeParticipants([message.author || message.from]);
+                            await chat.sendMessage(`${message.author || message.from} has been removed from the group for repeated violations.`);
+                            const stickerMedia = MessageMedia.fromFilePath(stickerPath);
+                            await chat.sendMessage(stickerMedia, { sendMediaAsSticker: true });
+                        } catch (error) {
+                            console.error('Failed to remove participant:', error);
                         }
                     } else {
-                        await chat.sendMessage(`Unwanted links not allowed here !!! Warning Count: ${warningCounts[senderNumber]}`);
-                        // Send sticker as a warning
+                        await chat.sendMessage(`Unwanted links not allowed here! Warning Count: ${warningCounts[senderNumber]}`);
                         const stickerMedia = MessageMedia.fromFilePath(stickerPath1);
                         await chat.sendMessage(stickerMedia, { sendMediaAsSticker: true });
                     }
@@ -295,75 +273,75 @@ client.on('message', async (message) => {
             }
         }
 
-
-        if (bannedWords.some((word) => message.body.includes(word))) {
+        if (bannedWords.some(word => message.body.includes(word))) {
             warningCounts[senderNumber]++;
             await message.delete(true);
-
             if (warningCounts[senderNumber] > 3) {
-                if (chat.isGroup) {
-                    try {
-                        // Attempt to remove the participant from the group
-                        await chat.removeParticipants([message.author || message.from]);
-                        await chat.sendMessage(`${message.author || message.from} has been removed from the group for repeated violations.`);
-
-                        const stickerMedia = MessageMedia.fromFilePath(stickerPath3);
-                        await chat.sendMessage(stickerMedia, { sendMediaAsSticker: true });
-                    } catch (error) {
-                        console.error('Failed to remove participant:', error);
-                    }
+                try {
+                    await chat.removeParticipants([message.author || message.from]);
+                    await chat.sendMessage(`${message.author || message.from} has been removed from the group for repeated violations.`);
+                    const stickerMedia = MessageMedia.fromFilePath(stickerPath3);
+                    await chat.sendMessage(stickerMedia, { sendMediaAsSticker: true });
+                } catch (error) {
+                    console.error('Failed to remove participant:', error);
                 }
             } else {
-
-                await chat.sendMessage(`⚠️ Warning !!! Do not use banned words. Warning Count: ${warningCounts[senderNumber]}`);
-                // Send sticker as a warning
+                await chat.sendMessage(`⚠️ Warning! Do not use banned words. Warning Count: ${warningCounts[senderNumber]}`);
                 const stickerMedia = MessageMedia.fromFilePath(stickerPath2);
                 await chat.sendMessage(stickerMedia, { sendMediaAsSticker: true });
             }
-
             return;
         }
-
     }
-
-
-    // Handling .tao and .tagall commands if they appear anywhere in the message body
-    if (message.body.includes('.tao') || message.body.includes('.tagall')) {
+    // Handling .tao, .tagall, and translation commands in message replies
+    if (message.body.toLowerCase().includes('.tao') || message.body.toLowerCase().includes('.tagall') || message.body.toLowerCase().includes('translate')) {
         const chat = await message.getChat();
 
         if (chat.isGroup) {
-            if (message.body.includes('.tao')) {
-                const query = message.body.slice(message.body.indexOf('.tao') + 4).trim() || 'Hi';
+            const messageBodyLower = message.body.toLowerCase();
+
+            if (messageBodyLower.includes('.tao')) {
+                const query = message.body.slice(message.body.toLowerCase().indexOf('.tao') + 4).trim() || 'Hi';
                 generate(query, message);
-            } else if (message.body.includes('.tagall')) {
+            } else if (messageBodyLower.includes('.tagall')) {
                 const groupSize = chat.participants.length;
-                const batchSize = 500; 
-                const delay = 1000; 
+                const batchSize = 500;
+                const delay = 1000;
                 for (let i = 0; i < groupSize; i += batchSize) {
                     const batchMentions = chat.participants.slice(i, i + batchSize).map((participant) => participant.id._serialized);
                     await chat.sendMessage('@everyone', { mentions: batchMentions });
-
-                    // Adding delay between batches
                     if (i + batchSize < groupSize) {
                         await new Promise((resolve) => setTimeout(resolve, delay));
                     }
                 }
+            } else if (messageBodyLower.includes('translate')) {
+                const replyMessage = await message.getQuotedMessage();
+                let textToTranslate = '';
+                if (replyMessage) {
+                    textToTranslate = replyMessage.body;
+                } else {
+                    const [_, targetLanguage] = messageBodyLower.split('translate to');
+                    textToTranslate = message.body.replace(`translate to ${targetLanguage}`, '').trim();
+                }
+                let targetLanguage = 'english';
+                if (messageBodyLower.includes('translate to')) {
+                    targetLanguage = messageBodyLower.split('translate to')[1].trim().toLowerCase();
+                }
+                if (validLanguages.includes(targetLanguage)) {
+                    await generate(textToTranslate, message, targetLanguage);
+                } else {
+                    await message.reply('Sorry, the target language is not supported.');
+                }
             }
         }
     }
 
-
 });
-
-// Start the WhatsApp client
 client.initialize();
-
-// Define a simple API endpoint (optional, for additional functionality)
 app.post('/api/send-message', async (req, res) => {
     const { number, message } = req.body;
 
     try {
-        // Send a message using the WhatsApp bot
         await client.sendMessage(`${number}`, message);
         res.status(200).json({ status: 'Message sent successfully!' });
     } catch (error) {
@@ -384,14 +362,12 @@ const setRandomInterval = (func, min, max) => {
     const randomDelay = Math.floor(Math.random() * (max - min + 1) + min);
     setTimeout(() => {
         func();
-        setRandomInterval(func, min, max); // Recursively set the next random interval
+        setRandomInterval(func, min, max);
     }, randomDelay);
 };
 
-// Start pinging the service at random intervals between 1 and 5 minutes
 setRandomInterval(pingService, 5 * 60 * 1000, 10 * 60 * 1000);
 
-// Start the Express server
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
