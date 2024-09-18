@@ -165,10 +165,6 @@ async function generate(prompt, message) {
         await message.reply('Sorry, I encountered an error while processing your request.');
     }
 }
-
-
-
-
 // Event listeners for client status
 client.on('qr', (qr) => {
     qrcode.generate(qr, { small: true });
@@ -273,25 +269,25 @@ client.on('message', async (message) => {
             }
         }
 
-        if (bannedWords.some(word => message.body.includes(word))) {
-            warningCounts[senderNumber]++;
-            await message.delete(true);
-            if (warningCounts[senderNumber] > 3) {
-                try {
-                    await chat.removeParticipants([message.author || message.from]);
-                    await chat.sendMessage(`${message.author || message.from} has been removed from the group for repeated violations.`);
-                    const stickerMedia = MessageMedia.fromFilePath(stickerPath3);
-                    await chat.sendMessage(stickerMedia, { sendMediaAsSticker: true });
-                } catch (error) {
-                    console.error('Failed to remove participant:', error);
-                }
-            } else {
-                await chat.sendMessage(`⚠️ Warning! Do not use banned words. Warning Count: ${warningCounts[senderNumber]}`);
-                const stickerMedia = MessageMedia.fromFilePath(stickerPath2);
-                await chat.sendMessage(stickerMedia, { sendMediaAsSticker: true });
-            }
-            return;
-        }
+        // if (bannedWords.some(word => message.body.includes(word))) {
+        //     warningCounts[senderNumber]++;
+        //     await message.delete(true);
+        //     if (warningCounts[senderNumber] > 3) {
+        //         try {
+        //             await chat.removeParticipants([message.author || message.from]);
+        //             await chat.sendMessage(`${message.author || message.from} has been removed from the group for repeated violations.`);
+        //             const stickerMedia = MessageMedia.fromFilePath(stickerPath3);
+        //             await chat.sendMessage(stickerMedia, { sendMediaAsSticker: true });
+        //         } catch (error) {
+        //             console.error('Failed to remove participant:', error);
+        //         }
+        //     } else {
+        //         await chat.sendMessage(`⚠️ Warning! Do not use banned words. Warning Count: ${warningCounts[senderNumber]}`);
+        //         const stickerMedia = MessageMedia.fromFilePath(stickerPath2);
+        //         await chat.sendMessage(stickerMedia, { sendMediaAsSticker: true });
+        //     }
+        //     return;
+        // }
     }
     // Handling .tao, .tagall, and translation commands in message replies
     if (message.body.toLowerCase().includes('.tao') || message.body.toLowerCase().includes('.tagall') || message.body.toLowerCase().includes('translate')) {
