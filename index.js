@@ -353,68 +353,68 @@ const pingService = () => {
         .catch(response => console.log('Service pinged successfully'));
 };
 
-// // Function to set a random interval between 5 and 10 minutes
-// const setRandomInterval = (func, min, max) => {
-//     const randomDelay = Math.floor(Math.random() * (max - min + 1) + min);
-//     setTimeout(() => {
-//         func();
-//         setRandomInterval(func, min, max);
-//     }, randomDelay);
+// Function to set a random interval between 5 and 10 minutes
+const setRandomInterval = (func, min, max) => {
+    const randomDelay = Math.floor(Math.random() * (max - min + 1) + min);
+    setTimeout(() => {
+        func();
+        setRandomInterval(func, min, max);
+    }, randomDelay);
+};
+
+setRandomInterval(pingService, 1 * 60 * 1000, 5 * 60 * 1000);
+// Constants for the ping intervals and restricted time period
+// const MIN_INTERVAL = 3 * 60 * 1000; // 3 minutes in milliseconds
+// const MAX_INTERVAL = 5 * 60 * 1000; // 5 minutes in milliseconds
+// const RESTRICTED_START_HOUR = 1;
+// const RESTRICTED_START_MINUTE = 30;
+// const RESTRICTED_END_HOUR = 8;
+// const RESTRICTED_END_MINUTE = 0;
+
+// // Function to check if the current time is within the restricted period
+// const isWithinRestrictedPeriod = () => {
+//     const now = new Date();
+//     const istOffset = 5.5 * 60 * 60 * 1000; // IST offset from UTC in milliseconds
+//     const istNow = new Date(now.getTime() + istOffset);
+
+//     const start = new Date(istNow);
+//     start.setHours(RESTRICTED_START_HOUR, RESTRICTED_START_MINUTE, 0, 0);
+
+//     const end = new Date(istNow);
+//     end.setHours(RESTRICTED_END_HOUR, RESTRICTED_END_MINUTE, 0, 0);
+
+//     return istNow >= start && istNow <= end;
 // };
 
-// setRandomInterval(pingService, 5 * 60 * 1000, 10 * 60 * 1000);
-// Constants for the ping intervals and restricted time period
-const MIN_INTERVAL = 3 * 60 * 1000; // 3 minutes in milliseconds
-const MAX_INTERVAL = 5 * 60 * 1000; // 5 minutes in milliseconds
-const RESTRICTED_START_HOUR = 1;
-const RESTRICTED_START_MINUTE = 30;
-const RESTRICTED_END_HOUR = 8;
-const RESTRICTED_END_MINUTE = 0;
+// // Function to set a random interval between min and max, considering the restricted period
+// const setRandomInterval = (func, min, max) => {
+//     if (isWithinRestrictedPeriod()) {
+//         // Skip execution during the restricted period and wait until the end of the period
+//         const now = new Date();
+//         const istOffset = 5.5 * 60 * 60 * 1000; // IST offset from UTC in milliseconds
+//         const istNow = new Date(now.getTime() + istOffset);
 
-// Function to check if the current time is within the restricted period
-const isWithinRestrictedPeriod = () => {
-    const now = new Date();
-    const istOffset = 5.5 * 60 * 60 * 1000; // IST offset from UTC in milliseconds
-    const istNow = new Date(now.getTime() + istOffset);
+//         const nextAllowedTime = new Date(istNow);
+//         nextAllowedTime.setHours(RESTRICTED_END_HOUR, RESTRICTED_END_MINUTE, 0, 0);
 
-    const start = new Date(istNow);
-    start.setHours(RESTRICTED_START_HOUR, RESTRICTED_START_MINUTE, 0, 0);
+//         const delay = nextAllowedTime - istNow;
 
-    const end = new Date(istNow);
-    end.setHours(RESTRICTED_END_HOUR, RESTRICTED_END_MINUTE, 0, 0);
+//         setTimeout(() => {
+//             setRandomInterval(func, min, max); // Recalculate the interval after the restricted period
+//         }, delay);
+//     } else {
+//         // Execute at a random interval between the given range
+//         const delay = Math.floor(Math.random() * (max - min + 1)) + min;
 
-    return istNow >= start && istNow <= end;
-};
+//         setTimeout(() => {
+//             func();
+//             setRandomInterval(func, min, max); // Recursively set the next random interval
+//         }, delay);
+//     }
+// };
 
-// Function to set a random interval between min and max, considering the restricted period
-const setRandomInterval = (func, min, max) => {
-    if (isWithinRestrictedPeriod()) {
-        // Skip execution during the restricted period and wait until the end of the period
-        const now = new Date();
-        const istOffset = 5.5 * 60 * 60 * 1000; // IST offset from UTC in milliseconds
-        const istNow = new Date(now.getTime() + istOffset);
-
-        const nextAllowedTime = new Date(istNow);
-        nextAllowedTime.setHours(RESTRICTED_END_HOUR, RESTRICTED_END_MINUTE, 0, 0);
-
-        const delay = nextAllowedTime - istNow;
-
-        setTimeout(() => {
-            setRandomInterval(func, min, max); // Recalculate the interval after the restricted period
-        }, delay);
-    } else {
-        // Execute at a random interval between the given range
-        const delay = Math.floor(Math.random() * (max - min + 1)) + min;
-
-        setTimeout(() => {
-            func();
-            setRandomInterval(func, min, max); // Recursively set the next random interval
-        }, delay);
-    }
-};
-
-// Start pinging the service at random intervals between 3 and 8 minutes, with a restricted period from 1:30 AM to 8:00 AM IST
-setRandomInterval(pingService, MIN_INTERVAL, MAX_INTERVAL);
+// // Start pinging the service at random intervals between 3 and 8 minutes, with a restricted period from 1:30 AM to 8:00 AM IST
+// setRandomInterval(pingService, MIN_INTERVAL, MAX_INTERVAL);
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
