@@ -154,6 +154,18 @@ async function generate(prompt, message) {
                         { text: "You're eager to claim those prizes, huh?  I get it!  🤩  \n\nThe prize counter will open in **December 2024**.  \n\nSo, keep working hard and earning those Arcade Points!  You'll have a chance to redeem them for some awesome Google Cloud goodies soon!  🎉  \n\nIn the meantime, you can check out the Arcade website for more information about the prize counter and the types of goodies you can get.  \n\nGood luck with your learning journey!  🚀" },
                     ],
                 },
+                {
+                    role: "user",
+                    parts: [
+                        { text: "Who is your Husband?\n" },
+                    ],
+                },
+                {
+                    role: "model",
+                    parts: [
+                        { text: "Om is my dear husband" },
+                    ],
+                },
             ],
         });
         const result = await chatSession.sendMessage(prompt);
@@ -268,38 +280,158 @@ client.on('message', async (message) => {
                 }
             }
         }
-
-        // if (bannedWords.some(word => message.body.includes(word))) {
-        //     warningCounts[senderNumber]++;
-        //     await message.delete(true);
-        //     if (warningCounts[senderNumber] > 3) {
-        //         try {
-        //             await chat.removeParticipants([message.author || message.from]);
-        //             await chat.sendMessage(`${message.author || message.from} has been removed from the group for repeated violations.`);
-        //             const stickerMedia = MessageMedia.fromFilePath(stickerPath3);
-        //             await chat.sendMessage(stickerMedia, { sendMediaAsSticker: true });
-        //         } catch (error) {
-        //             console.error('Failed to remove participant:', error);
-        //         }
-        //     } else {
-        //         await chat.sendMessage(`⚠️ Warning! Do not use banned words. Warning Count: ${warningCounts[senderNumber]}`);
-        //         const stickerMedia = MessageMedia.fromFilePath(stickerPath2);
-        //         await chat.sendMessage(stickerMedia, { sendMediaAsSticker: true });
-        //     }
-        //     return;
-        // }
     }
+
+    // Message reactions based on content
+const emojiReactions = {
+    'hello': '👋',           // Wave
+    'hi': '👋',              // Wave
+    'hey': '👋',             // Wave
+    'lol': '😂',             // Laughing
+    'haha': '😂',            // Laughing
+    'hahaha': '😂',          // Laughing
+    'sad': '😢',             // Sad face
+    'angry': '😡',           // Angry face
+    'envy': '😒',            // Envy
+    'wow': '😮',             // Surprised
+    'love': '❤️',            // Heart
+    'like': '❤️',            // Like
+    'cool': '😎',            // Cool sunglasses
+    'cry': '😭',             // Crying
+    'fire': '🔥',            // Fire emoji
+    'clap': '👏',            // Clapping
+    'mindblown': '🤯',       // Mind blown
+    'sleep': '😴',           // Sleeping
+    'party': '🎉',           // Party popper
+    'think': '🤔',           // Thinking
+    'shock': '😱',           // Shocked
+    'confused': '😕',        // Confused
+    'ok': '👌',              // OK hand
+    'thumbsup': '👍',        // Thumbs up
+    'facepalm': '🤦',        // Facepalm
+    'wink': '😉',            // Wink
+    'great': '👍',           // Great
+    'nice': '😊',            // Nice
+    'yes': '✅',             // Yes
+    'no': '❌',              // No
+    'sorry': '😞',           // Sorry
+    'cheers': '🥂',          // Cheers
+    'bored': '😩',           // Bored
+    'busy': '🏃',            // Busy
+    'welcome': '🌟',         // Welcome
+    'miss you': '🥺',        // Miss you
+    'bravo': '👏',           // Bravo
+    'dance': '💃',           // Dance
+    'happy': '😁',           // Happy
+    'good morning': '☀️',    // Good morning
+    'good night': '🌙',      // Good night
+    'thank you': '🙏',       // Thank you
+    'please': '🙏',          // Please
+    'oops': '😬',            // Oops
+    'congratulations': '🎊', // Congratulations
+    'well done': '👏',       // Well done
+    'love you': '❤️',       // Love you
+    'silly': '😜',           // Silly
+    'funny': '😂',           // Funny
+    'wow': '😲',             // Wow
+    'yummy': '🤤',           // Yummy
+    'peace': '✌️',           // Peace
+    'good luck': '🍀',       // Good luck
+    'money': '💰',           // Money
+    'help': '🆘',            // Help
+    'gamer': '🎮',           // Gamer
+    'arcade': '🕹️',         // Arcade
+    'play': '🎮',            // Play
+    'score': '🏆',           // Score
+    'level up': '⬆️',       // Level up
+    'bonus': '🎁',           // Bonus
+    'challenge': '🎮',       // Challenge
+    'victory': '🏆',         // Victory
+    'game on': '🕹️',        // Game on
+    'winner': '🏅',          // Winner
+    'let’s play': '🎮',      // Let’s play
+    'fun time': '🎉',        // Fun time
+    'awesome': '🌟',         // Awesome
+    'let’s go': '🏃‍♂️',      // Let's go
+    'hurry up': '🏃‍♂️',      // Hurry up
+    'score high': '📈',      // Score high
+    'lucky': '🍀',           // Lucky
+    'out of order': '🚫',    // Out of order
+    'game over': '💀',       // Game over
+    'try again': '🔄',       // Try again
+    'cheat': '🧐',           // Cheat
+    'next level': '🚀',      // Next level
+    'restart': '🔄',         // Restart
+    'glitch': '⚠️',          // Glitch
+    'new game': '🆕',        // New game
+    'legend': '🌟',          // Legend
+    'epic win': '🏆',        // Epic win
+    'squad up': '👯‍♂️',      // Squad up
+    'double trouble': '🔄',  // Double trouble
+    'multiplayer': '🎮',     // Multiplayer
+    'teamwork': '🤝',        // Teamwork
+    'challenge accepted': '💪', // Challenge accepted
+    'let’s team': '🤝',      // Let’s team
+    'co-op': '👯‍♂️',        // Co-op
+    'good game': '👍',       // Good game
+    'fun': '🎉',             // Fun
+    'nostalgic': '😌',       // Nostalgic
+    'game night': '🌜',      // Game night
+    'family fun': '👨‍👩‍👧‍👦', // Family fun
+    'skill': '🏆',           // Skill
+    'adventure': '🌍',       // Adventure
+    'succeed': '🎉',         // Succeed
+    'beast mode': '🐾',      // Beast mode
+    'training': '🏋️‍♂️',     // Training
+    'challenge mode': '💪',  // Challenge mode
+    'let’s win': '🏆',       // Let's win
+    'quick match': '⚡',      // Quick match
+    'boss battle': '👹',     // Boss battle
+    'gaming life': '🎮',     // Gaming life
+    'perfect': '👌',         // Perfect
+    'lets go crazy': '🤪',  // Let's go crazy
+    'join us': '🤝',         // Join us
+};
+
+for (const [triggerWord, emoji] of Object.entries(emojiReactions)) {
+    if (messageContent.includes(triggerWord)) {
+        await message.react(emoji); // React with the corresponding emoji
+        break; // Only react to the first matching keyword
+    }
+}
+
+
     // Handling .tao, .tagall, and translation commands in message replies
     if (message.body.toLowerCase().includes('.tao') || message.body.toLowerCase().includes('.tagall') || message.body.toLowerCase().includes('translate')) {
-        const chat = await message.getChat();
-
         if (chat.isGroup) {
             const messageBodyLower = message.body.toLowerCase();
 
+            // Handle the .tao command
             if (messageBodyLower.includes('.tao')) {
-                const query = message.body.slice(message.body.toLowerCase().indexOf('.tao') + 4).trim() || 'Hi';
+                const query = message.body.trim() || 'Hi';
                 generate(query, message);
-            } else if (messageBodyLower.includes('.tagall')) {
+            }
+
+            // Handle replies to a .tao message or bot's messages
+            const replyMessage = await message.getQuotedMessage();
+            if (replyMessage) {
+                const replyContentLower = replyMessage.body.toLowerCase();
+
+                // If the quoted message includes '.tao', respond accordingly
+                if (replyContentLower.includes('.tao')) {
+                    const query = replyMessage.body.trim() || 'Hi';
+                    generate(query, message); // Reply to the quoted tao message
+                }
+
+                // Check if the quoted message was sent by the bot itself
+                if (replyMessage.fromMe) {
+                    const query = message.body.trim() || 'Hi'; // Use the new message content for generating response
+                    generate(query, message); // Respond to the reply made to the bot's message
+                }
+            }
+
+            // Handle the .tagall command
+            if (messageBodyLower.includes('.tagall')) {
                 const groupSize = chat.participants.length;
                 const batchSize = 500;
                 const delay = 1000;
@@ -310,9 +442,12 @@ client.on('message', async (message) => {
                         await new Promise((resolve) => setTimeout(resolve, delay));
                     }
                 }
-            } else if (messageBodyLower.includes('translate')) {
-                const replyMessage = await message.getQuotedMessage();
+            }
+
+            // Handle the translation command
+            if (messageBodyLower.includes('translate')) {
                 let textToTranslate = '';
+                const replyMessage = await message.getQuotedMessage();
                 if (replyMessage) {
                     textToTranslate = replyMessage.body;
                 } else {
@@ -331,8 +466,9 @@ client.on('message', async (message) => {
             }
         }
     }
-
 });
+
+
 client.initialize();
 app.post('/api/send-message', async (req, res) => {
     const { number, message } = req.body;
