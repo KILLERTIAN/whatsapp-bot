@@ -6,6 +6,7 @@ const qrcode = require('qrcode-terminal');
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
+const cron = require('node-cron');
 
 // Load environment variables from .env file
 dotenv.config();
@@ -290,13 +291,9 @@ client.on('message', async (message) => {
                 const stickerMedia = MessageMedia.fromFilePath(stickerPath2);
                 await chat.sendMessage(stickerMedia, { sendMediaAsSticker: true });
             }
-
             return;
         }
-
     }
-
-
     // Handling .tao and .tagall commands if they appear anywhere in the message body
     if (message.body.includes('.tao') || message.body.includes('.tagall')) {
         const chat = await message.getChat();
@@ -341,48 +338,51 @@ client.on('message', async (message) => {
         await chat.sendMessage(helpMessage);
         return;
     }
-    
-
-
 });
 
 // Start the WhatsApp client
 client.initialize();
+// ✅ Root Route to Fix 404 Issue
+// Define a simple API endpoint (optional, for additional functionality)
+app.post('/api/send-message', async (req, res) => {
+    const { number, message } = req.body;
 
-// app.post('/api/send-message', async (req, res) => {
-//     const { number, message } = req.body;
+    try {
+        // Send a message using the WhatsApp bot
+        await client.sendMessage(`${number}`, message);
+        res.status(200).json({ status: 'Message sent successfully!' });
+    } catch (error) {
+        console.error('Error sending message:', error);
+        res.status(500).json({ status: 'Failed to send message', error });
+    }
+});
 
-//     try {
-//         await client.sendMessage(`${number}`, message);
-//         res.status(200).json({ status: 'Message sent successfully!' });
-//     } catch (error) {
-//         console.error('Error sending message:', error);
-//         res.status(500).json({ status: 'Failed to send message', error });
-//     }
-// });
+// ✅ Correct Render URL
+const SERVICE_URL = 'https://whatsapp-bot-3ab8.onrender.com';
 
-// const SERVICE_URL = 'https://whatsapp-bot-3ab8.onrender.com';
+// ✅ Improved Ping Function (Handles Network Errors)
+const pingService = async () => {
+    try {
+        const response = await axios.get(SERVICE_URL);
+        console.log('✅ Service pinged successfully:', response.status);
+    } catch (error) {
+        console.error('❌ Error pinging service:', error.response?.status || error.message);
+    }
+};
 
-// const pingService = () => {
-//     axios.get(SERVICE_URL)
-//         .then(response => console.log('Service pinged successfully:', response.status))
-//         .catch(error => console.error('Error pinging service:', error));
-// };
+// ✅ Random Interval Function (Between 3 to 5 Minutes)
+const setRandomInterval = (func, min, max) => {
+    const randomDelay = Math.floor(Math.random() * (max - min + 1)) + min;
+    setTimeout(() => {
+        func();
+        setRandomInterval(func, min, max); // Recursive Call
+    }, randomDelay);
+};
 
-// const setRandomInterval = (func, min, max) => {
-//     const randomDelay = Math.floor(Math.random() * (max - min + 1)) + min;
-//     setTimeout(() => {
-//         func();
-//         setRandomInterval(func, min, max);
-//     }, randomDelay);
-// };
+// ✅ Start Pinging Service
+setRandomInterval(pingService, 1 * 60 * 1000, 3 * 60 * 1000);
 
-// const MIN_INTERVAL = 3 * 60 * 1000; // 3 minutes in milliseconds
-// const MAX_INTERVAL = 5 * 60 * 1000; // 5 minutes in milliseconds
-
-// setRandomInterval(pingService, MIN_INTERVAL, MAX_INTERVAL);
-
-
+// ✅ Start Express Server
 app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+    console.log(`🚀 Server is running on port ${port}`);
 });
